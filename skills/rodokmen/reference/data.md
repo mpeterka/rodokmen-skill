@@ -85,8 +85,9 @@ zapiš k obci jako `"domy": {"112": [50.0671, 15.9872]}` (lat, lon). `mista.py` 
 `"zeme": "Morava"` (Čechy, Slezsko) určí, které zemské dějinné události se k obci hodí; bez něj se země odvodí z okresu.
 
 ## `dejiny.json` – místní události pro časovou osu
-`{"udalosti": [{"od": 1834, "do": 1834, "nazev": "Požár Holic", "mista": ["Holice"], "text": "…", "wiki": "Holice"}]}` –
-`mista` jsou klíče z `mista.json` (nebo `"kruh": [[lat, lon, km]]`), `wiki` název článku české Wikipedie (nepovinné).
+`{"udalosti": [{"od": 1834, "do": 1834, "nazev": "Požár Holic", "mista": ["Holice"], "text": "…", "zdroj": "https://…"}]}` –
+`mista` jsou klíče z `mista.json` (nebo `"kruh": [[lat, lon, km]]`), `zdroj` adresa pramene (web ji ukáže jako „pramen“),
+`wiki` název článku české Wikipedie (nepovinné).
 Celozemské události má skill v `tools/dejiny.json`; sem patří jen to, co se týká obcí rodu. Viz `web.md`.
 
 ## `dokumenty.json` – rodinné fotky a dokumenty na webu

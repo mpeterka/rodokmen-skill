@@ -290,7 +290,7 @@ def dejiny(places, mista, udalosti):
                 hits.append((d, pl["name"]))
         if hits:
             hits.sort()
-            out.append(dict(od=u["od"], do=u["do"], nazev=u["nazev"], text=u["text"], wiki=u.get("wiki"),
+            out.append(dict(od=u["od"], do=u["do"], nazev=u["nazev"], text=u["text"], wiki=u.get("wiki"), zdroj=u.get("zdroj"),
                             mistni="kruh" in u or "mista" in u, mista=[n for _, n in hits][:6], km=round(hits[0][0]) if "kruh" in u else None))
     return sorted(out, key=lambda e: e["od"])
 

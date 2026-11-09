@@ -45,6 +45,7 @@ const wiki = (t) => `https://cs.wikipedia.org/wiki/${encodeURIComponent(t.replac
                 <p class="small muted">
                   {u.mistni ? 'Blízko míst rodu' : 'Z míst rodu'}: {u.mista.join(', ')}{u.km != null && u.km > 0 ? ` (nejblíž ${u.km} km)` : ''}
                   {u.wiki && <> · <a href={wiki(u.wiki)} target="_blank" rel="noopener">Wikipedie ↗</a></>}
+                  {u.zdroj && <> · <a href={u.zdroj} target="_blank" rel="noopener">pramen ↗</a></>}
                 </p>
               </li>
             ) : (
