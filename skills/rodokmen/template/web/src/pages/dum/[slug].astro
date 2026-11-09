@@ -27,12 +27,12 @@ const others = houses.filter((x) => x.place === h.place && x.slug !== h.slug);
 
   <h2>Na staré mapě</h2>
   <HouseMap houses={[h]} height="380px" stara zoom={h.exact ? 17 : 15} />
-  <p class="small">
+  {h.cuzk && <p class="small">
     <a href={h.cuzk} target="_blank" rel="noopener">Okolí na císařském otisku stabilního katastru 1824–1843 (ČÚZK Archiv) ↗</a><br />
     <span class="muted">Na otisku jsou čísla parcel, čísla domů až na indikační skice (v téže aplikaci). Domy se přečíslovávaly
       – dnešní čp. {h.cp} nemusí stát na stejném místě jako v době zápisu.
       {!h.exact && ' Polohu domu jde zaměřit a zapsat do mista.json (domy), pak bude na mapě přesně.'}</span>
-  </p>
+  </p>}
 
   {others.length > 0 && (
     <>

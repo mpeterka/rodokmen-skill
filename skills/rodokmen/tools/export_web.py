@@ -187,7 +187,7 @@ def cuzk_archiv(lat, lon, r=300):
 
 EVENT_KINDS = {"*": "narození", "×": "sňatek", "†": "úmrtí"}
 YEAR = re.compile(r"\b(1[3-9]\d\d|20[0-2]\d)\b")
-CP = r"\w*\s*,?\s*(?:čp\.|č\.\s*p\.|č\.)\s*(\d+)"   # za názvem obce: „Holice čp. 112“, „v Rovni č. p. 7“
+CP = r"\w*\s*,?\s*(?:čp\.|č\.\s*p\.|č\.)\s*(?P<cp>\d+)"   # za názvem obce: „Holice čp. 112“, „v Rovni č. p. 7“
 
 
 def timeline(people):
@@ -219,7 +219,7 @@ def houses(people, mista):
         for p in people.values():
             for f in p["facts"]:
                 for m in rx.finditer(f):
-                    cp = m.group(1)
+                    cp = m.group("cp")   # pojmenovaná: výraz re obce může mít vlastní skupiny
                     pos = (e.get("domy") or {}).get(cp)
                     h = out.setdefault((name, cp), dict(slug=slugify(f"{name} {cp}"), place=name, cp=cp, people=[],
                                                         exact=bool(pos), lat=pos[0] if pos else e["lat"], lon=pos[1] if pos else e["lon"]))
@@ -232,7 +232,7 @@ def houses(people, mista):
         h["people"].sort(key=lambda r: r["year"] or 9999)
         ys = [r["year"] for r in h["people"] if r["year"]]
         h["years"] = [min(ys), max(ys)] if ys else None
-        h["cuzk"] = cuzk_archiv(h["lat"], h["lon"], 300 if h["exact"] else 900)
+        h["cuzk"] = None if zeme(mista.get(h["place"], {})) == "cizina" else cuzk_archiv(h["lat"], h["lon"], 300 if h["exact"] else 900)
     return sorted(out.values(), key=lambda h: (h["place"], int(h["cp"])))
 
 
@@ -249,6 +249,8 @@ def zeme(e):
     if e.get("zeme"):
         return e["zeme"]
     osm = e.get("osm", "")
+    if osm and "Česko" not in osm:
+        return "cizina"   # mimo Česko: české zemské události ani ČÚZK se jí netýkají
     okres = re.search(r"okres ([^,]+)", osm)
     if okres and okres.group(1).strip() in OKRESY:
         return OKRESY[okres.group(1).strip()]
