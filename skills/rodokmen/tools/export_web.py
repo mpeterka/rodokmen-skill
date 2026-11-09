@@ -144,6 +144,98 @@ def draw_boxes(src, dst, boxes, small):
     return True
 
 
+def wgs84_to_sjtsk(lat, lon):
+    """WGS84 → S-JTSK (EPSG:5514, záporné východ/sever) – Helmert na Bessel + Křovák (EPSG 9819), přesnost ~1 m.
+    Jen pro odkaz do aplikace ČÚZK Archiv, která chce výřez v S-JTSK."""
+    from math import radians, sin, cos, tan, asin, atan, sqrt, pi
+    a, f = 6378137.0, 1 / 298.257223563
+    e2 = f * (2 - f)
+    p, l = radians(lat), radians(lon)
+    N = a / sqrt(1 - e2 * sin(p) ** 2)
+    x, y, z = N * cos(p) * cos(l), N * cos(p) * sin(l), N * (1 - e2) * sin(p)
+    rx, ry, rz = (radians(s / 3600) for s in (4.9984, 1.5867, 5.2611))   # EPSG:1623 obráceně
+    m = 1 - 3.5623e-6
+    x, y, z = x - 570.8, y - 85.7, z - 462.8
+    x, y, z = m * (x + rz * y - ry * z), m * (-rz * x + y + rx * z), m * (ry * x - rx * y + z)
+    a, f = 6377397.155, 1 / 299.1528128
+    e2 = f * (2 - f)
+    pr = sqrt(x * x + y * y)
+    p = atan(z / (pr * (1 - e2)))
+    for _ in range(6):
+        p = atan((z + e2 * a / sqrt(1 - e2 * sin(p) ** 2) * sin(p)) / pr)
+    l = atan(y / x)
+    e = sqrt(e2)
+    pc, l0, ac, pp, kp = radians(49.5), radians(24 + 50 / 60), radians(30 + 17 / 60 + 17.30311 / 3600), radians(78.5), 0.9999
+    A = a * sqrt(1 - e2) / (1 - e2 * sin(pc) ** 2)
+    B = sqrt(1 + e2 * cos(pc) ** 4 / (1 - e2))
+    g0 = asin(sin(pc) / B)
+    t0 = tan(pi / 4 + g0 / 2) * ((1 + e * sin(pc)) / (1 - e * sin(pc))) ** (e * B / 2) / tan(pi / 4 + pc / 2) ** B
+    n, r0 = sin(pp), kp * A / tan(pp)
+    U = 2 * (atan(t0 * tan(p / 2 + pi / 4) ** B / ((1 + e * sin(p)) / (1 - e * sin(p))) ** (e * B / 2)) - pi / 4)
+    V = B * (l0 - l)
+    T = asin(cos(ac) * sin(U) + sin(ac) * cos(U) * cos(V))
+    D = asin(cos(U) * sin(V) / cos(T))
+    r = r0 * tan(pi / 4 + pp / 2) ** n / tan(T / 2 + pi / 4) ** n
+    return -r * sin(n * D), -r * cos(n * D)
+
+
+def cuzk_archiv(lat, lon, r=300):
+    """Odkaz do ČÚZK Archiv (císařské otisky stabilního katastru 1824–1843) na výřez kolem bodu."""
+    x, y = wgs84_to_sjtsk(lat, lon)
+    return f"https://ags.cuzk.gov.cz/archiv/?extentstring={x - r:.0f},{y - r:.0f},{x + r:.0f},{y + r:.0f}"
+
+
+EVENT_KINDS = {"*": "narození", "×": "sňatek", "†": "úmrtí"}
+YEAR = re.compile(r"\b(1[3-9]\d\d|20[0-2]\d)\b")
+CP = r"\w*\s*,?\s*(?:čp\.|č\.\s*p\.|č\.)\s*(\d+)"   # za názvem obce: „Holice čp. 112“, „v Rovni č. p. 7“
+
+
+def timeline(people):
+    """Narození, sňatky a úmrtí předků s rokem; sňatek manželů jen jednou."""
+    out = {}
+    for p in people.values():
+        for f in p["facts"]:
+            kind, y = f[:1], YEAR.search(f)
+            if kind not in EVENT_KINDS or not y:
+                continue
+            who = frozenset([p["slug"], p["spouse"]]) if kind == "×" and p["spouse"] else frozenset([p["slug"]])
+            key = (kind, y.group(1), who)
+            if key in out:
+                out[key]["people"].append(p["slug"])
+                continue
+            text = f[1:].strip()
+            out[key] = dict(year=int(y.group(1)), date=text[:YEAR.search(text).end()], kind=kind, kindName=EVENT_KINDS[kind],
+                            text=text, people=[p["slug"]], line=p["line"])
+    return sorted(out.values(), key=lambda e: (e["year"], e["kind"] != "*"))
+
+
+def houses(people, mista):
+    """Domy podle čísel popisných ve faktech („Holice čp. 112“); poloha z mista.json → domy, jinak střed obce."""
+    out = {}
+    for name, e in mista.items():
+        if "lat" not in e:
+            continue
+        rx = re.compile(r"(?:" + (e.get("re") or re.escape(name)) + r")" + CP)
+        for p in people.values():
+            for f in p["facts"]:
+                for m in rx.finditer(f):
+                    cp = m.group(1)
+                    pos = (e.get("domy") or {}).get(cp)
+                    h = out.setdefault((name, cp), dict(slug=slugify(f"{name} {cp}"), place=name, cp=cp, people=[],
+                                                        exact=bool(pos), lat=pos[0] if pos else e["lat"], lon=pos[1] if pos else e["lon"]))
+                    y = YEAR.search(f)
+                    kind = f[:1] if f[:1] in EVENT_KINDS else ""
+                    if not any(r["slug"] == p["slug"] and r["text"] == f for r in h["people"]):
+                        h["people"].append(dict(slug=p["slug"], kind=kind, kindName=EVENT_KINDS.get(kind, "zmínka"),
+                                                year=int(y.group(1)) if y else None, text=f))
+    for h in out.values():
+        h["people"].sort(key=lambda r: r["year"] or 9999)
+        ys = [r["year"] for r in h["people"] if r["year"]]
+        h["years"] = [min(ys), max(ys)] if ys else None
+        h["cuzk"] = cuzk_archiv(h["lat"], h["lon"], 300 if h["exact"] else 900)
+    return sorted(out.values(), key=lambda h: (h["place"], int(h["cp"])))
+
+
 def write(path, text):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="\n") as f:
@@ -363,7 +455,7 @@ def main():
     has_story = os.path.exists(os.path.join(DATA, "pribeh.md"))
     public_cfg = {k: v for k, v in cfg.items() if k != "prihlaseni"}
     public_cfg["maPribeh"] = has_story
-    site = dict(config=public_cfg, places=places, root=slugs[1], aliases={a: slugs[a] for a in SAME}, people=people,
+    site = dict(config=public_cfg, places=places, events=timeline(people), houses=houses(people, jload("mista.json", {})), root=slugs[1], aliases={a: slugs[a] for a in SAME}, people=people,
                 families=families, records=records, lines=lines,
                 issues=[dict(title=i, text="") if isinstance(i, str) else dict(title=i[0], text=i[1]) for i in ISSUES], stats=stats, hypotheses=hypotheses,
                 docs=[dict(img=d["img"], caption=d["popis"], people=[slugs[k] for k in d.get("osoby", []) if k in slugs])

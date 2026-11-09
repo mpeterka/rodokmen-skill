@@ -1,0 +1,56 @@
+---
+import Base from '../layouts/Base.astro';
+import PersonLink from '../components/PersonLink.astro';
+import { events, lineByK } from '../lib/data.js';
+const ROOT_COLOR = '#8a6d52';
+const centuries = [];
+for (const e of events) {
+  const c = Math.floor((e.year - 1) / 100) + 1, d = Math.floor(e.year / 10) * 10;
+  let C = centuries.at(-1);
+  if (!C || C.c !== c) centuries.push((C = { c, decades: [] }));
+  let D = C.decades.at(-1);
+  if (!D || D.d !== d) C.decades.push((D = { d, events: [] }));
+  D.events.push(e);
+}
+const SYM = { '*': '*', '×': '×', '†': '†' };
+---
+<Base title="Časová osa">
+  <h1>Časová osa rodu</h1>
+  <p class="lead">Narození, sňatky a úmrtí předků v pořadí, jak šly za sebou. Barevný proužek je rod.</p>
+  {events.length === 0 && <p>Osa se naplní, až budou ve faktech osob roky („* 14. 2. 1890 Holice“).</p>}
+  {centuries.length > 1 && (
+    <nav class="osa-skok">{centuries.map((C) => <a href={`#stoleti-${C.c}`}>{C.c}. století</a>)}</nav>
+  )}
+  {centuries.map((C) => (
+    <section id={`stoleti-${C.c}`}>
+      <h2>{C.c}. století</h2>
+      {C.decades.map((D) => (
+        <div class="osa-dekada">
+          <h3>{D.d}. léta</h3>
+          <ul class="osa">
+            {D.events.map((e) => (
+              <li class={`osa-${e.kind === '*' ? 'n' : e.kind === '×' ? 's' : 'u'}`} style={`--c:${lineByK[e.line]?.color ?? ROOT_COLOR}`}>
+                <span class="osa-rok">{e.date}</span>
+                <span class="osa-sym" title={e.kindName}>{SYM[e.kind]}</span>
+                <span>{e.people.map((s, i) => <>{i > 0 && ' a '}<PersonLink slug={s} showYears={false} /></>)}
+                  <span class="muted small"> – {e.kindName}{e.text.slice(e.date.length) ? `, ${e.text.slice(e.date.length).trim()}` : ''}</span></span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </section>
+  ))}
+</Base>
+
+<style>
+  .osa-skok { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin: 0.8rem 0 0.4rem; position: sticky; top: 0; background: var(--bg, #fbf8f2); padding: 0.4rem 0; z-index: 2; }
+  .osa-dekada h3 { font-size: 0.95rem; color: var(--muted); margin: 1rem 0 0.3rem; }
+  .osa { list-style: none; padding: 0; margin: 0; border-left: 2px solid var(--line); }
+  .osa li { display: grid; grid-template-columns: 6.5rem 1.2rem 1fr; gap: 0.4rem; align-items: baseline; padding: 0.25rem 0 0.25rem 0.7rem;
+    border-left: 4px solid var(--c); margin-left: -3px; }
+  .osa-rok { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 0.9rem; }
+  .osa-sym { font-weight: 700; text-align: center; }
+  .osa-u .osa-sym { color: #6e6153; }
+  @media (max-width: 520px) { .osa li { grid-template-columns: 4.8rem 1rem 1fr; } }
+</style>

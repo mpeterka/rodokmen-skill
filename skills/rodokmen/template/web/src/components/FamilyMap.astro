@@ -23,6 +23,7 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact });
 
 <script>
   import L from 'leaflet';
+  import { podklady } from '../lib/podklady';
   // jména pocházejí z dat (i z importovaného GEDCOM) – do HTML popupu a tooltipu jen jako text
   const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
@@ -48,10 +49,7 @@ const payload = JSON.stringify({ places: site.places, lines, names, compact });
       el.addEventListener('touchmove', (e) => { if (e.touches.length === 1) showHint(); }, { passive: true });
       el.addEventListener('touchend', () => map.dragging.disable(), { passive: true });
     }
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(map);
+    podklady(L, map, { sbalene: compact });
     const groups: Record<string, L.LayerGroup> = {};
     const bounds: L.LatLngExpression[] = [];
     for (const pl of places) {

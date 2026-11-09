@@ -4,7 +4,7 @@ import PersonLink from '../../components/PersonLink.astro';
 import Record from '../../components/Record.astro';
 import Pedigree from '../../components/Pedigree.astro';
 import MobileTree from '../../components/MobileTree.astro';
-import { people, families, lineByK, records, dateKey, href, statusClass } from '../../lib/data.js';
+import { people, families, lineByK, records, houses, dateKey, href, statusClass } from '../../lib/data.js';
 
 export function getStaticPaths() {
   return Object.keys(people).map((slug) => ({ params: { slug } }));
@@ -13,6 +13,7 @@ const p = people[Astro.params.slug];
 const line = p.line ? lineByK[p.line] : null;
 const recs = [...new Set(p.records)].filter((r) => records[r]).sort((a, b) => dateKey(records[a].date) - dateKey(records[b].date));
 const path = [...p.path].reverse().filter(Boolean);
+const myHouses = houses.filter((h) => h.people.some((r) => r.slug === p.slug));
 ---
 <Base title={p.name} description={`${p.name} ${p.years} – ${p.rel}`}>
   <div class="crumbs">
@@ -31,6 +32,7 @@ const path = [...p.path].reverse().filter(Boolean);
       Podruhé jako {p.also.map((a) => a.rel).join(', ')}.</p>
   )}
   {p.facts.length > 0 && <ul class="facts">{p.facts.map((f) => <li>{f}</li>)}</ul>}
+  {myHouses.length > 0 && <p class="small">Domy: {myHouses.map((h, i) => <>{i > 0 && ' · '}<a href={href.house(h.slug)}>{h.place} čp. {h.cp}</a></>)}</p>}
   {p.note && <p class="note">{p.note}</p>}
 
   <h2>Rodina</h2>

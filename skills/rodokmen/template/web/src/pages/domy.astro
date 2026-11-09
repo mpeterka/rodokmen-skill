@@ -1,0 +1,34 @@
+---
+import Base from '../layouts/Base.astro';
+import HouseMap from '../components/HouseMap.astro';
+import { houses, href } from '../lib/data.js';
+const byPlace = Object.entries(houses.reduce((g, h) => ((g[h.place] ??= []).push(h), g), {}));
+---
+<Base title="Domy rodu" wider>
+  <h1>Domy, kde žili naši předci</h1>
+  <p class="lead">Každé číslo popisné, které se objevilo v zápisech: kdo se v domě narodil, oženil nebo zemřel.
+    Starou mapu z let 1836–1852 zapnete vpravo nahoře.</p>
+  {houses.length === 0 ? (
+    <p>Domy přibudou, až budou ve faktech osob čísla popisná („* 1890 Holice čp. 112“) a obec bude v seznamu míst.</p>
+  ) : (
+    <>
+      <HouseMap houses={houses} />
+      <p class="small muted">Plný kroužek = poloha domu zaměřená ručně, čárkovaný = zatím jen u středu obce.
+        Domy se v 19. století přečíslovávaly – dnešní čp. nemusí být tentýž dům.</p>
+      {byPlace.map(([place, list]) => (
+        <>
+          <h2>{place}</h2>
+          <div class="grid2">
+            {list.map((h) => (
+              <a class="card card-link" href={href.house(h.slug)}>
+                <h3>čp. {h.cp}</h3>
+                <p class="small muted">{h.years ? (h.years[0] === h.years[1] ? h.years[0] : `${h.years[0]}–${h.years[1]}`) : 'bez roku'} ·
+                  {' '}{[...new Set(h.people.map((r) => r.slug))].length} osob</p>
+              </a>
+            ))}
+          </div>
+        </>
+      ))}
+    </>
+  )}
+</Base>

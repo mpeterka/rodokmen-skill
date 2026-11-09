@@ -1,0 +1,51 @@
+---
+// Mapa domů rodu (Leaflet): dnešní mapa nebo II. vojenské mapování 1836–1852. Dům bez zaměřené polohy stojí
+// u středu obce (čárkovaný kroužek) – domy kolem něj jsou rozestavené do spirály, aby šly rozkliknout.
+import 'leaflet/dist/leaflet.css';
+import { href } from '../lib/data.js';
+const { houses, height = '60vh', stara = false, zoom = null } = Astro.props;
+const payload = JSON.stringify({
+  stara,
+  zoom,
+  houses: houses.map((h) => ({ lat: h.lat, lon: h.lon, exact: h.exact, label: `${h.place} čp. ${h.cp}`, years: h.years, url: href.house(h.slug), n: h.people.length })),
+});
+---
+<div class="hmap" style={`height:${height}`} data-map={payload}></div>
+
+<script>
+  import L from 'leaflet';
+  import { podklady } from '../lib/podklady';
+  const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+  for (const el of document.querySelectorAll<HTMLElement>('.hmap')) {
+    const { houses, stara, zoom } = JSON.parse(el.dataset.map!);
+    const map = L.map(el, { scrollWheelZoom: false, dragging: !L.Browser.mobile, tap: false });
+    podklady(L, map, { stara });
+    const used: Record<string, number> = {};
+    const bounds: L.LatLngExpression[] = [];
+    for (const h of houses) {
+      let pos: [number, number] = [h.lat, h.lon];
+      if (!h.exact && houses.length > 1) {
+        const i = (used[`${h.lat},${h.lon}`] = (used[`${h.lat},${h.lon}`] ?? -1) + 1);
+        const a = i * 2.4, d = 0.0012 * Math.sqrt(i + 1);
+        pos = [h.lat + d * Math.cos(a), h.lon + (d * Math.sin(a)) / Math.cos((h.lat * Math.PI) / 180)];
+      }
+      L.circleMarker(pos, {
+        radius: 6 + Math.min(h.n, 8), color: '#3b2e22', weight: 1.5, fillColor: '#c0703a', fillOpacity: h.exact ? 0.9 : 0.5,
+        dashArray: h.exact ? undefined : '3 3',
+      })
+        .bindPopup(`<a href="${esc(h.url)}"><strong>${esc(h.label)}</strong></a>${h.years ? ` <span class="y">${h.years[0]}–${h.years[1]}</span>` : ''}<br>${h.n} ${h.n === 1 ? 'záznam' : h.n < 5 ? 'záznamy' : 'záznamů'}${h.exact ? '' : '<br><span class="y">poloha jen přibližná (střed obce)</span>'}`)
+        .bindTooltip(esc(h.label))
+        .addTo(map);
+      bounds.push(pos);
+    }
+    if (zoom && bounds.length) map.setView(bounds[0], zoom);
+    else if (bounds.length) map.fitBounds(L.latLngBounds(bounds), { padding: [30, 30], maxZoom: 15 });
+    else map.setView([49.8, 15.5], 7);
+  }
+</script>
+
+<style is:global>
+  .hmap { width: 100%; border: 1px solid var(--line); border-radius: 12px; z-index: 0; margin: 0.6rem 0; }
+  .hmap .leaflet-popup-content .y { color: #6e6153; }
+</style>

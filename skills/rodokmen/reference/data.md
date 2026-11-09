@@ -79,6 +79,9 @@ nebo dotaz s větší obcí či okresem. U **víceznačných názvů** (Podolí,
 víc než 50 km od všech ostatních míst projektu (nejspíš jiná obec stejného jména). Kontrola mapy (`kontrola.py`) u
 předků bez obce vypíše v hranatých závorkách slova z faktů, která vypadají jako obec. Když je obec v `mista.json`,
 jen ji výraz `re` nechytí ve skloňovaném tvaru („v Přesece“ × `Přesek`) – uprav výraz (`Přese?[kc]`).
+Domy: web najde čísla popisná ve faktech hned za obcí („* 1890 Holice čp. 112“, „sedlák v Dolní Rovni č. p. 7“) a udělá
+z nich stránky Domy. Bez polohy stojí dům u středu obce; zaměřenou polohu (podle indikační skici nebo staré mapy)
+zapiš k obci jako `"domy": {"112": [50.0671, 15.9872]}` (lat, lon). `mista.py` klíč `domy` zachová.
 
 ## `dokumenty.json` – rodinné fotky a dokumenty na webu
 `[{"img": "foto_svatba_1919", "popis": "Svatba Jana a Josefy, Holice 1919.", "osoby": [8, 9]}]`

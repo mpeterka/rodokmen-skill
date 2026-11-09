@@ -6,6 +6,14 @@ dá v repozitáři **Watch → Custom → Releases**.
 
 Projekt založený starší verzí Claude sám nabídne aktualizovat (pozná to podle souboru `VERZE`).
 
+## Nevydáno
+
+**Nové**
+- Web: stránka Časová osa (narození, sňatky a úmrtí předků po stoletích a desetiletích).
+- Web: stránky Domy a Dům – čísla popisná z faktů, kdo v domě žil, mapa a odkaz na císařský otisk 1824–1843 v ČÚZK Archivu;
+  zaměřená poloha domu v `mista.json` (`domy`). Osoba odkazuje na své domy.
+- Mapa: přepínač na II. vojenské mapování 1836–1852.
+
 ## 0.9.2 – 7. 11. 2026
 
 **Opravy**

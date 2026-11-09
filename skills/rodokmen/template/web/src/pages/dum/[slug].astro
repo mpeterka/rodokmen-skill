@@ -1,0 +1,43 @@
+---
+import Base from '../../layouts/Base.astro';
+import PersonLink from '../../components/PersonLink.astro';
+import HouseMap from '../../components/HouseMap.astro';
+import { houses, href } from '../../lib/data.js';
+
+export function getStaticPaths() {
+  return houses.map((h) => ({ params: { slug: h.slug } }));
+}
+const h = houses.find((x) => x.slug === Astro.params.slug);
+const others = houses.filter((x) => x.place === h.place && x.slug !== h.slug);
+---
+<Base title={`${h.place} čp. ${h.cp}`} description={`Dům ${h.place} čp. ${h.cp} – kdo v něm žil`}>
+  <div class="crumbs"><a href="/domy/">Domy</a><span>→</span><span>{h.place}</span></div>
+  <h1>{h.place} čp. {h.cp}</h1>
+  <div class="chips">
+    {h.years && <span class="chip">{h.years[0] === h.years[1] ? h.years[0] : `${h.years[0]}–${h.years[1]}`}</span>}
+    <span class="chip">{h.exact ? 'poloha zaměřená' : 'poloha jen u středu obce'}</span>
+  </div>
+
+  <h2>Kdo tu žil</h2>
+  <ul class="facts">
+    {h.people.map((r) => (
+      <li><PersonLink slug={r.slug} /> – <span class="muted">{r.kindName}{r.year ? ` ${r.year}` : ''}:</span> {r.text}</li>
+    ))}
+  </ul>
+
+  <h2>Na staré mapě</h2>
+  <HouseMap houses={[h]} height="380px" stara zoom={h.exact ? 17 : 15} />
+  <p class="small">
+    <a href={h.cuzk} target="_blank" rel="noopener">Okolí na císařském otisku stabilního katastru 1824–1843 (ČÚZK Archiv) ↗</a><br />
+    <span class="muted">Na otisku jsou čísla parcel, čísla domů až na indikační skice (v téže aplikaci). Domy se přečíslovávaly
+      – dnešní čp. {h.cp} nemusí stát na stejném místě jako v době zápisu.
+      {!h.exact && ' Polohu domu jde zaměřit a zapsat do mista.json (domy), pak bude na mapě přesně.'}</span>
+  </p>
+
+  {others.length > 0 && (
+    <>
+      <h2>Další domy rodu v obci {h.place}</h2>
+      <p>{others.map((o, i) => <>{i > 0 && ' · '}<a href={href.house(o.slug)}>čp. {o.cp}</a></>)}</p>
+    </>
+  )}
+</Base>

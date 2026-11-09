@@ -139,6 +139,15 @@ zkus v `launch.json` `"runtimeExecutable": "node"` a `"runtimeArgs": ["web/node_
   v prohlížeči a ten to přes obyčejné http (mimo localhost) nedovolí – přihlášení by nefungovalo.
 - CapRover: `npm run deploy-caprover` (vyžaduje nainstalovaný a přihlášený `caprover` CLI).
 
+## Časová osa, domy a stará mapa
+- **Časová osa** (`/casova-osa/`): fakta začínající `*`, `×`, `†` s rokem, po stoletích a desetiletích; sňatek manželů jednou.
+- **Domy** (`/domy/`, `/dum/<obec>-<čp>/`): čísla popisná z faktů (viz `data.md`, `mista.json` → `domy`). Stránka domu
+  ukazuje, kdo se v něm narodil, oženil či zemřel, výřez II. vojenského mapování a odkaz na císařský otisk stabilního
+  katastru 1824–1843 v aplikaci ČÚZK Archiv (`export_web.py` převádí polohu do S-JTSK). Upozorni uživatele, že se domy
+  přečíslovávaly – dnešní čp. nemusí být tentýž dům; polohu ověř na indikační skice.
+- **Mapy** (`lib/podklady.ts`): přepínač Dnešní mapa / Mapa 1836–1852 (II. vojenské mapování, dlaždice
+  chartae-antiquae.cz, © VÚGTK a HÚ AV ČR). Císařské otisky ČÚZK jako vrstvu vložit nejde (služba chce token), proto jen odkaz.
+
 ## Úpravy vzhledu
 Styly `web/src/styles/global.css` (barvy v `:root`), rozložení `web/src/layouts/Base.astro`, stránky `web/src/pages/`.
 Barvy rodů jsou v `tools/export_web.py` (`LINE_COLORS`) a `tools/fan_chart.py` (`BASE`). Upravuj jen na přání uživatele
