@@ -9,7 +9,9 @@ Projekt založený starší verzí Claude sám nabídne aktualizovat (pozná to 
 ## Nevydáno
 
 **Nové**
-- Web: stránka Časová osa (narození, sňatky a úmrtí předků po stoletích a desetiletích).
+- Web: stránka Časová osa (narození, sňatky a úmrtí předků po stoletích a desetiletích) s dějinnými událostmi
+  (mor, hlad, války, reformy) vybranými podle obcí a let předků – bitva u Slavkova se ukáže jen rodu ze Slavkovska;
+  místní události obcí v `data/dejiny.json`.
 - Web: stránky Domy a Dům – čísla popisná z faktů, kdo v domě žil, mapa a odkaz na císařský otisk 1824–1843 v ČÚZK Archivu;
   zaměřená poloha domu v `mista.json` (`domy`). Osoba odkazuje na své domy.
 - Mapa: přepínač na II. vojenské mapování 1836–1852.

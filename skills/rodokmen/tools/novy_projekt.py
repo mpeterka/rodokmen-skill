@@ -417,7 +417,7 @@ def main():
     tools = os.path.join(dst, "tools")
     os.makedirs(tools, exist_ok=True)
     nastroje = sorted(f for f in os.listdir(os.path.join(SKILL, "tools"))
-                      if f.endswith((".py", ".sh")) and f != "novy_projekt.py")
+                      if f.endswith((".py", ".sh", ".json")) and f != "novy_projekt.py")
     aktualizuj(os.path.join(SKILL, "tools"), dst, "tools", nastroje, zaloha, vysl, stary, cek)
     uloz_cekajici(dst, cek)
     for f in nastroje:   # i ponechaný vlastní .sh s CRLF: Git Bash by skript nespustil

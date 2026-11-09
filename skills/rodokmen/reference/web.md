@@ -141,6 +141,14 @@ zkus v `launch.json` `"runtimeExecutable": "node"` a `"runtimeArgs": ["web/node_
 
 ## Časová osa, domy a stará mapa
 - **Časová osa** (`/casova-osa/`): fakta začínající `*`, `×`, `†` s rokem, po stoletích a desetiletích; sňatek manželů jednou.
+  Mezi nimi **dějinné události** z `tools/dejiny.json` (mor, hlad, války, reformy) – export vybere jen ty, které sedí na obce
+  předků místem (země Čechy/Morava/Slezsko podle kraje a okresu v `mista.json`, u bitev a povstání okruh v km) i časem
+  (rod tam tehdy žil). U obcí v okresech přes zemskou hranici (Svitavy, Žďár, Jihlava, Jindřichův Hradec, Frýdek-Místek,
+  Ostrava) zapiš k obci `"zeme": "Morava"` (nebo Čechy, Slezsko), jinak dostane události obou zemí.
+- **Místní události** obcí předků patří do `data/dejiny.json` (stejný tvar, místo jako `"mista": ["Holice"]`). Až je web
+  hotový, nabídni je uživateli: pro obce s nejvíc předky projdi článek o obci (Wikipedie – Historie, web obce, kronika)
+  a vypiš požáry, povodně, epidemie, stavbu kostela či železnice, přifaření, vystěhování – co se dotklo všech
+  obyvatel. Jen doložené věci s pramenem, každou větou „co to znamenalo pro lidi ve vsi“. Text piš vlastními slovy.
 - **Domy** (`/domy/`, `/dum/<obec>-<čp>/`): čísla popisná z faktů (viz `data.md`, `mista.json` → `domy`). Stránka domu
   ukazuje, kdo se v něm narodil, oženil či zemřel, výřez II. vojenského mapování a odkaz na císařský otisk stabilního
   katastru 1824–1843 v aplikaci ČÚZK Archiv (`export_web.py` převádí polohu do S-JTSK). Upozorni uživatele, že se domy

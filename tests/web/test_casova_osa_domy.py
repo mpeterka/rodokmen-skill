@@ -43,5 +43,28 @@ check("domy: zaměřená poloha", hs["Holice 112"]["exact"] and hs["Holice 112"]
 check("domy: skloňovaná obec a „č. p.“", {r["slug"] for r in hs["Dolní Roveň 7"]["people"]} == {"josefa", "josef"}, hs["Dolní Roveň 7"])
 check("domy: odkaz ČÚZK Archiv", hs["Holice 112"]["cuzk"].startswith("https://ags.cuzk.gov.cz/archiv/?extentstring=-63"), hs["Holice 112"]["cuzk"])
 
+check("země: Pardubický kraj = Čechy", ew.zeme({"osm": "Holice, okres Pardubice, Pardubický kraj, Česko"}) == "Čechy")
+check("země: Zlínský kraj = Morava", ew.zeme({"osm": "Vsetín, okres Vsetín, Zlínský kraj, Česko"}) == "Morava")
+check("země: okres Opava = Slezsko", ew.zeme({"osm": "Opava, okres Opava, Moravskoslezský kraj, Česko"}) == "Slezsko")
+check("země: okres Svitavy = neznámo", ew.zeme({"osm": "Polička, okres Svitavy, Pardubický kraj, Česko"}) is None)
+check("země: ruční zápis má přednost", ew.zeme({"zeme": "Čechy", "osm": "Polička, okres Svitavy"}) == "Čechy")
+
+places = [dict(name="Holice", lat=50.0663, lon=15.9859, years=[1700, 1900], hypothesis=False)]
+mista2 = {"Holice": {"osm": "Holice, okres Pardubice, Pardubický kraj, Česko"}}
+udalosti = [
+    {"od": 1866, "do": 1866, "nazev": "Hradec", "text": "", "kruh": [[50.29, 15.74, 50]]},       # ~31 km → ano
+    {"od": 1805, "do": 1805, "nazev": "Slavkov", "text": "", "kruh": [[49.153, 16.876, 35]]},     # ~120 km → ne
+    {"od": 1656, "do": 1679, "nazev": "Lánové rejstříky", "text": "", "zeme": ["Morava"]},     # jiná země → ne
+    {"od": 1770, "do": 1772, "nazev": "Hlad", "text": "", "zeme": ["Čechy", "Morava"]},          # ano
+    {"od": 1500, "do": 1520, "nazev": "Dávno", "text": "", "zeme": ["Čechy"]},                   # rod tam ještě nežil → ne
+    {"od": 1890, "do": 1890, "nazev": "Požár", "text": "", "mista": ["Holice"]},                 # místní → ano
+]
+era = {e["nazev"]: e for e in ew.dejiny(places, mista2, udalosti)}
+check("dějiny: výběr podle místa a času", sorted(era) == ["Hlad", "Hradec", "Požár"], list(era))
+check("dějiny: vzdálenost u okruhu", 25 <= (era.get("Hradec") or {}).get("km", 0) <= 40, era.get("Hradec"))
+check("dějiny: data skillu jdou načíst",
+      all({"od", "do", "nazev", "text"} <= set(u) and ("zeme" in u or "kruh" in u)
+          for u in __import__("json").load(open(os.path.join(SKILL, "tools", "dejiny.json"), encoding="utf-8"))["udalosti"]))
+
 print(f"\n{sum(vysledky)}/{len(vysledky)} v pořádku")
 sys.exit(0 if all(vysledky) else 1)

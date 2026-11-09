@@ -81,7 +81,13 @@ předků bez obce vypíše v hranatých závorkách slova z faktů, která vypad
 jen ji výraz `re` nechytí ve skloňovaném tvaru („v Přesece“ × `Přesek`) – uprav výraz (`Přese?[kc]`).
 Domy: web najde čísla popisná ve faktech hned za obcí („* 1890 Holice čp. 112“, „sedlák v Dolní Rovni č. p. 7“) a udělá
 z nich stránky Domy. Bez polohy stojí dům u středu obce; zaměřenou polohu (podle indikační skici nebo staré mapy)
-zapiš k obci jako `"domy": {"112": [50.0671, 15.9872]}` (lat, lon). `mista.py` klíč `domy` zachová.
+zapiš k obci jako `"domy": {"112": [50.0671, 15.9872]}` (lat, lon). `mista.py` klíče `domy` a `zeme` zachová.
+`"zeme": "Morava"` (Čechy, Slezsko) určí, které zemské dějinné události se k obci hodí; bez něj se země odvodí z okresu.
+
+## `dejiny.json` – místní události pro časovou osu
+`{"udalosti": [{"od": 1834, "do": 1834, "nazev": "Požár Holic", "mista": ["Holice"], "text": "…", "wiki": "Holice"}]}` –
+`mista` jsou klíče z `mista.json` (nebo `"kruh": [[lat, lon, km]]`), `wiki` název článku české Wikipedie (nepovinné).
+Celozemské události má skill v `tools/dejiny.json`; sem patří jen to, co se týká obcí rodu. Viz `web.md`.
 
 ## `dokumenty.json` – rodinné fotky a dokumenty na webu
 `[{"img": "foto_svatba_1919", "popis": "Svatba Jana a Josefy, Holice 1919.", "osoby": [8, 9]}]`

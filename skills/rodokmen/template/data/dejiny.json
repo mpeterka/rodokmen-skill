@@ -1,0 +1,4 @@
+{
+ "_popis": "Místní události obcí předků pro časovou osu (požár vsi, povodeň, stavba kostela, železnice, epidemie ve farnosti). Stejný tvar jako tools/dejiny.json; místo se zadá jmény obcí z mista.json (\"mista\": [\"Holice\"]) nebo okruhem (\"kruh\": [[lat, lon, km]]). Každá událost má mít pramen – kroniku, literaturu nebo článek o obci.",
+ "udalosti": []
+}

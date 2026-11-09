@@ -236,6 +236,63 @@ def houses(people, mista):
     return sorted(out.values(), key=lambda h: (h["place"], int(h["cp"])))
 
 
+# Země podle kraje a okresu z OpenStreetMap (mista.json → osm). Okresy přes zemskou hranici (Svitavy, Žďár, Jihlava,
+# Jindřichův Hradec, Frýdek-Místek, Ostrava) vrací None = neznámo; přesně jde zapsat "zeme" k obci v mista.json.
+CECHY_KRAJE = ("Praha", "Středočeský", "Jihočeský", "Plzeňský", "Karlovarský", "Ústecký", "Liberecký", "Královéhradecký", "Pardubický", "Vysočina")
+MORAVA_KRAJE = ("Jihomoravský", "Zlínský", "Olomoucký", "Moravskoslezský")
+OKRESY = {"Svitavy": None, "Žďár nad Sázavou": None, "Jihlava": None, "Jindřichův Hradec": None, "Frýdek-Místek": None,
+          "Ostrava-město": None, "Třebíč": "Morava", "Jeseník": "Slezsko", "Opava": "Slezsko", "Karviná": "Slezsko",
+          "Bruntál": "Slezsko", "Nový Jičín": "Morava"}
+
+
+def zeme(e):
+    if e.get("zeme"):
+        return e["zeme"]
+    osm = e.get("osm", "")
+    okres = re.search(r"okres ([^,]+)", osm)
+    if okres and okres.group(1).strip() in OKRESY:
+        return OKRESY[okres.group(1).strip()]
+    if any(k in osm for k in MORAVA_KRAJE):
+        return "Morava"
+    if any(k in osm for k in CECHY_KRAJE):
+        return "Čechy"
+    return None
+
+
+def km(a, b):
+    from math import radians, sin, cos, asin, sqrt
+    la1, lo1, la2, lo2 = map(radians, (a[0], a[1], b[0], b[1]))
+    return 12742 * asin(sqrt(sin((la2 - la1) / 2) ** 2 + cos(la1) * cos(la2) * sin((lo2 - lo1) / 2) ** 2))
+
+
+def dejiny(places, mista, udalosti):
+    """Dějinné události, které se týkají obcí předků: místem (země, okruh, jmenované obce) i časem (kdy tam rod žil)."""
+    out = []
+    for u in udalosti:
+        hits = []
+        for pl in places:
+            if pl["hypothesis"]:
+                continue
+            y = pl["years"]
+            if y and not (y[0] - 30 <= u["do"] and u["od"] <= y[1] + 5):   # rod tam v té době (zhruba) žil
+                continue
+            if "mista" in u:
+                d = 0 if pl["name"] in u["mista"] else None
+            elif "kruh" in u:
+                ds = [km((pl["lat"], pl["lon"]), k[:2]) for k in u["kruh"] if km((pl["lat"], pl["lon"]), k[:2]) <= k[2]]
+                d = min(ds) if ds else None
+            else:
+                z = zeme(mista.get(pl["name"], {}))
+                d = 0 if z is None or z in u.get("zeme", []) else None
+            if d is not None:
+                hits.append((d, pl["name"]))
+        if hits:
+            hits.sort()
+            out.append(dict(od=u["od"], do=u["do"], nazev=u["nazev"], text=u["text"], wiki=u.get("wiki"),
+                            mistni="kruh" in u or "mista" in u, mista=[n for _, n in hits][:6], km=round(hits[0][0]) if "kruh" in u else None))
+    return sorted(out, key=lambda e: e["od"])
+
+
 def write(path, text):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="\n") as f:
@@ -455,7 +512,12 @@ def main():
     has_story = os.path.exists(os.path.join(DATA, "pribeh.md"))
     public_cfg = {k: v for k, v in cfg.items() if k != "prihlaseni"}
     public_cfg["maPribeh"] = has_story
-    site = dict(config=public_cfg, places=places, events=timeline(people), houses=houses(people, jload("mista.json", {})), root=slugs[1], aliases={a: slugs[a] for a in SAME}, people=people,
+    mista = jload("mista.json", {})
+    udalosti = json.load(open(os.path.join(TOOLS, "dejiny.json"), encoding="utf-8"))["udalosti"] \
+        if os.path.exists(os.path.join(TOOLS, "dejiny.json")) else []
+    udalosti += jload("dejiny.json", {}).get("udalosti", [])   # místní události projektu (požár, povodeň, kostel)
+    site = dict(config=public_cfg, places=places, events=timeline(people), houses=houses(people, mista),
+                eras=dejiny(places, mista, udalosti), root=slugs[1], aliases={a: slugs[a] for a in SAME}, people=people,
                 families=families, records=records, lines=lines,
                 issues=[dict(title=i, text="") if isinstance(i, str) else dict(title=i[0], text=i[1]) for i in ISSUES], stats=stats, hypotheses=hypotheses,
                 docs=[dict(img=d["img"], caption=d["popis"], people=[slugs[k] for k in d.get("osoby", []) if k in slugs])
